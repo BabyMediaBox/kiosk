@@ -1,0 +1,14 @@
+{
+    "server": "http://SERVER:3010",
+    "port" : 3030,
+    "serialPort": 9600,
+    "button1" : [
+        { "name" : "Example youtube video", "type" : 2, "src" : "https://www.youtube.com/embed/cVFhMkOp8n4?autoplay=1&showinfo=0&controls=0", "duration": 145}
+    ],
+    "button2" : [
+        { "name" : "Example youtube video", "type" : 2, "src" : "https://www.youtube.com/embed/cVFhMkOp8n4?autoplay=1&showinfo=0&controls=0", "duration": 145}
+    ],
+    "button3" : [
+        { "name" : "Example youtube video", "type" : 2, "src" : "https://www.youtube.com/embed/cVFhMkOp8n4?autoplay=1&showinfo=0&controls=0", "duration": 145}
+    ]
+}

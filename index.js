@@ -2,10 +2,49 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const SerialPort = require('serialport');
 const app = express();
+const request = require('request');
 const server = require('http').Server(app);
+const Readline = SerialPort.parsers.Readline;
+const parser = new Readline();
+const Config = require('./config.json');
 
 var port = new SerialPort('/dev/ttyACM0', {
-    baudRate: 9600
+    baudRate: Config.serialPort
+});
+port.pipe(parser);
+port.on('open', function() {
+    console.log("serial open with config", Config);
+});
+
+// Switches the port into "flowing mode"
+port.on('data', function (data) 
+{
+    var stringData = data.toString('utf8')
+    if( /\n/.exec(stringData) && parseInt(stringData) > 0 )
+    {
+        var btn = parseInt(stringData);
+        var list = Config["button"+btn];
+        var listIndex = Math.floor(Math.random() * list.length );
+        var requestData = {
+            url : Config.server  + "/button/" + btn,
+            form: {
+                item: JSON.stringify(list[listIndex])
+            }
+        };
+        console.log("Button pressed", btn);
+        request
+            .post( requestData, function(err, httpResponse, body) {
+                if( err )
+                {
+                    console.log('error on button press request', err);
+                }
+            });
+    }
+});
+
+// Read data that is available but keep the stream from entering "flowing mode"
+port.on('readable', function () {
+    console.log('readable event:', port.read());
 });
   
 function setColor( r, g, b, callback)
@@ -43,7 +82,9 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.text());
 app.use(bodyParser.json({ type: 'application/json'}));
 
-server.listen(3030);
+server.listen(Config.port, function(){
+    console.log("kiosk server running");
+});
 
 // Add headers
 app.use(function (req, res, next) {
