@@ -7,56 +7,94 @@ const server = require('http').Server(app);
 const Readline = SerialPort.parsers.Readline;
 const parser = new Readline();
 const Config = require('./config.json');
+var buttonMedia={};
+var port;
 
-var port = new SerialPort('/dev/ttyACM0', {
-    baudRate: Config.serialPort
-});
-port.pipe(parser);
-port.on('open', function() {
-    console.log("serial open with config", Config);
-});
+request
+    .get( Config.server  + "/kiosk-buttons", function(err, httpResponse, body) {
+        console.log("body", body);
+        try {
+            var data = JSON.parse(body);
+            buttonMedia = data;
+        } catch (error) {
+            
+        }
+        
+        
+        if( err )
+        {
+            console.log('error on button press request', err);
+        }
+    });
 
-// Switches the port into "flowing mode"
-port.on('data', function (data) 
-{
-    var stringData = data.toString('utf8')
-    if( /\n/.exec(stringData) && parseInt(stringData) > 0 )
+try {
+    port = new SerialPort('/dev/ttyACM0', {
+        baudRate: Config.serialPort
+    });
+    port.on('error', function(){
+        console.log("serial not found");
+    });
+    port.pipe(parser);
+    port.on('open', function() {
+        console.log("serial open with config", Config);
+    });
+    
+    
+    // Switches the port into "flowing mode"
+    port.on('data', function (data) 
     {
-        var btn = parseInt(stringData);
-        var list = Config["button"+btn];
-        var listIndex = Math.floor(Math.random() * list.length );
-        var requestData = {
-            url : Config.server  + "/button/" + btn,
-            form: {
-                item: JSON.stringify(list[listIndex])
+        var stringData = data.toString('utf8')
+        if( /\n/.exec(stringData) && parseInt(stringData) > 0 )
+        {
+            var btn = parseInt(stringData);
+            var list = buttonMedia[btn];
+            if(!list)
+            {
+                list = [];
             }
-        };
-        console.log("Button pressed", btn);
-        request
-            .post( requestData, function(err, httpResponse, body) {
-                if( err )
-                {
-                    console.log('error on button press request', err);
+            var listIndex = Math.floor(Math.random() * list.length );
+            var requestData = {
+                url : Config.server  + "/button/" + btn,
+                form: {
+                    item: JSON.stringify(list[listIndex])
                 }
-            });
-    }
-});
+            };
+            console.log("Button pressed", btn);
+            request
+                .post( requestData, function(err, httpResponse, body) {
+                    if( err )
+                    {
+                        console.log('error on button press request', err);
+                    }
+                });
+        }
+    });
+    
+    // Read data that is available but keep the stream from entering "flowing mode"
+    port.on('readable', function () {
+        console.log('readable event:', port.read());
+    });    
+} catch (error) {
+    console.log("serialport", error);
+}
 
-// Read data that is available but keep the stream from entering "flowing mode"
-port.on('readable', function () {
-    console.log('readable event:', port.read());
-});
   
 function setColor( r, g, b, callback)
 {
-    port.write(`${r},${g},${b}`, function(err){
-        if(err)
-        {
-            console.log(err);
-        }
-        console.log('set color');
-        callback();
-    });
+    if(port)
+    {
+        port.write(`${r},${g},${b}`, function(err){
+            if(err)
+            {
+                console.log(err);
+            }
+            console.log('set color');
+            callback();
+        });
+    }
+    else{
+        console.log("serial missing: set color ");
+    }
 }
 function rgbSequence(list, callback )
 {
@@ -84,6 +122,7 @@ app.use(bodyParser.json({ type: 'application/json'}));
 
 server.listen(Config.port, function(){
     console.log("kiosk server running");
+    setColor( 255, 255, 255 );
 });
 
 // Add headers

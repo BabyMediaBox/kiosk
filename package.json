@@ -21,5 +21,9 @@
     "express": "^4.16.3",
     "request": "^2.85.0",
     "serialport": "^6.2.0"
+  },
+  "nodemonConfig": {
+    "ignore": [],
+    "delay": "2500"
   }
 }
