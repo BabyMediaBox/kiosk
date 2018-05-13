@@ -12,7 +12,7 @@ var port;
 
 request
     .get( Config.server  + "/kiosk-buttons", function(err, httpResponse, body) {
-        console.log("body", body);
+        console.log("get kiosk buttons body", body);
         try {
             var data = JSON.parse(body);
             buttonMedia = data;
@@ -37,13 +37,14 @@ try {
     port.pipe(parser);
     port.on('open', function() {
         console.log("serial open with config", Config);
+	    setColor( 50, 50, 50 );
     });
     
     
     // Switches the port into "flowing mode"
     port.on('data', function (data) 
     {
-        var stringData = data.toString('utf8')
+        var stringData = data.toString('utf8');
         if( /\n/.exec(stringData) && parseInt(stringData) > 0 )
         {
             var btn = parseInt(stringData);
@@ -73,7 +74,8 @@ try {
     // Read data that is available but keep the stream from entering "flowing mode"
     port.on('readable', function () {
         console.log('readable event:', port.read());
-    });    
+    });   
+
 } catch (error) {
     console.log("serialport", error);
 }
@@ -93,7 +95,7 @@ function setColor( r, g, b, callback)
         });
     }
     else{
-        console.log("serial missing: set color ");
+        console.log(`serial missing: set color(${r},${g},${b})`);
     }
 }
 function rgbSequence(list, callback )
@@ -122,7 +124,7 @@ app.use(bodyParser.json({ type: 'application/json'}));
 
 server.listen(Config.port, function(){
     console.log("kiosk server running");
-    setColor( 255, 255, 255 );
+
 });
 
 // Add headers
@@ -150,7 +152,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/rgb', (req, res) => {
-    console.log(req.body);
+    console.log("/rgb request ", req.body);
     var r = req.body.r;
     var g = req.body.g;
     var b = req.body.b;
