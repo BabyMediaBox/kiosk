@@ -8,9 +8,11 @@ The kiosk handles incomming http request send when the socket receives a command
 - Load playlists for each button
 
 # Requirements:
-tmux ( you can run witout )
-nodejs 4+
-browser ( supporting kiosk mode )
+- tmux ( you can run witout )
+- nodejs 4+
+- browser ( supporting kiosk mode )
+- [Running the BabyMediaBox server](https://github.com/BabyMediaBox/server)
+- (Optional) [Running the BabyMediaBox arduino controller](https://github.com/BabyMediaBox/controller)
 
 # Running
 
