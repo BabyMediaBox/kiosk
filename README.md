@@ -4,10 +4,8 @@ The kiosk handles incomming http request send when the socket receives a command
 ## Implemented:
 - Setting single RBG color
 - Setting and RGB sequence that changes color after 2 seconds.
-
-## TODO :
 - Send to server when a button is pressed
-
+- Load playlists for each button
 
 # Requirements:
 tmux ( you can run witout )
@@ -22,3 +20,5 @@ For example
 ```
 /usr/bin/chromium --kiosk --window-position=0,0 http://BabyBoxServer:3010 &
 ```
+
+# [![Demo](https://mraiur.com/files/BabyMediaBox.gif)](https://youtu.be/wDMkf0tSyG4)
