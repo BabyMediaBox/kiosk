@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const SerialPort = require('serialport');
+const exec = require('child_process').exec;
 const app = express();
 const request = require('request');
 const server = require('http').Server(app);
@@ -12,7 +13,7 @@ var port;
 
 request
     .get( Config.server  + "/kiosk-buttons", function(err, httpResponse, body) {
-        console.log("get kiosk buttons body", body);
+        console.log("got kiosk buttons");
         try {
             var data = JSON.parse(body);
             buttonMedia = data;
@@ -125,6 +126,30 @@ app.use(bodyParser.json({ type: 'application/json'}));
 server.listen(Config.port, function(){
     console.log("kiosk server running");
 
+    exec("./getVolume.sh",
+        (error, stdout, stderr) => {
+            if (error !== null || stderr !== "" ) {
+                console.log(`exec error: ${error}, ${stderr}`);
+            }
+            else
+            {
+                var volume = stdout.replace("%", "");
+                console.log("send volume", volume);
+                var requestData = {
+                    url : Config.server  + "/kiosk-volume",
+                    form: {
+                        volume: volume
+                    }
+                };
+                request
+                    .post( requestData, function(err, httpResponse, body) {
+                        if( err )
+                        {
+                            console.log('error on button press request', err);
+                        }
+                    });
+            }
+        });
 });
 
 // Add headers
@@ -175,5 +200,32 @@ app.post('/rgb/sequence', (req, res) => {
         console.log("complete");
     } );
     console.log("rgb sequence", req.body );
+    res.send('ok');
+});
+
+
+app.post('/volume', (req, res) => {
+    var body = req.body;
+    console.log("volume", body.volume);
+    exec('amixer set Master '+body.volume+'%',
+        (error, stdout, stderr) => {
+            console.log(`${stdout}`);
+            console.log(`${stderr}`);
+            if (error !== null) {
+                console.log(`exec error: ${error}`);
+            }
+        });
+    res.send('ok');
+});
+
+app.post('/shutdown', (req, res) => {
+    exec('sudo shutdown -h now',
+        (error, stdout, stderr) => {
+            console.log(`${stdout}`);
+            console.log(`${stderr}`);
+            if (error !== null) {
+                console.log(`exec error: ${error}`);
+            }
+        });
     res.send('ok');
 });
