@@ -38,6 +38,18 @@ try {
     port.pipe(parser);
     port.on('open', function() {
         console.log("serial open with config", Config);
+
+        var requestData = {
+            url : Config.server  + "/kiosk-serial-online",
+            form: {}
+        };
+        request
+            .post( requestData, function(err, httpResponse, body) {
+                if( err )
+                {
+                    console.log('error on serial-online request', err);
+                }
+            });
 	    setColor( 50, 50, 50 );
     });
     
