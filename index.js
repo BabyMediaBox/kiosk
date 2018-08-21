@@ -8,25 +8,7 @@ const server = require('http').Server(app);
 const Readline = SerialPort.parsers.Readline;
 const parser = new Readline();
 const Config = require('./config.json');
-var buttonMedia={};
 var port;
-
-request
-    .get( Config.server  + "/kiosk-buttons", function(err, httpResponse, body) {
-        console.log("got kiosk buttons");
-        try {
-            var data = JSON.parse(body);
-            buttonMedia = data;
-        } catch (error) {
-            
-        }
-        
-        
-        if( err )
-        {
-            console.log('error on button press request', err);
-        }
-    });
 
 try {
     port = new SerialPort('/dev/ttyACM0', {
@@ -61,17 +43,8 @@ try {
         if( /\n/.exec(stringData) && parseInt(stringData) > 0 )
         {
             var btn = parseInt(stringData);
-            var list = buttonMedia[btn];
-            if(!list)
-            {
-                list = [];
-            }
-            var listIndex = Math.floor(Math.random() * list.length );
             var requestData = {
-                url : Config.server  + "/button/" + btn,
-                form: {
-                    item: JSON.stringify(list[listIndex])
-                }
+                url : Config.server  + "/button/" + btn
             };
             console.log("Button pressed", btn);
             request
@@ -92,6 +65,21 @@ try {
 } catch (error) {
     console.log("serialport", error);
 }
+
+var btn = parseInt(1);
+console.log("===>", Config.server  + "/button/" + btn);
+
+            var requestData = {
+                url : Config.server  + "/button/" + btn
+            };
+            console.log("Button pressed", btn);
+            request
+                .post( requestData, function(err, httpResponse, body) {
+                    if( err )
+                    {
+                        console.log('error on button press request', err);
+                    }
+                });
 
   
 function setColor( r, g, b, callback)
