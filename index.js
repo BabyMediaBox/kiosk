@@ -8,80 +8,41 @@ const server = require('http').Server(app);
 const Readline = SerialPort.parsers.Readline;
 const parser = new Readline();
 const Config = require('./config.json');
-var port;
+let port;
 
-try {
-    port = new SerialPort('/dev/ttyACM0', {
-        baudRate: Config.serialPort
-    });
-    port.on('error', function(){
-        console.log("serial not found");
-    });
-    port.pipe(parser);
-    port.on('open', function() {
-        console.log("serial open with config", Config);
+function sendButtonPress( buttonNumber ){
+    let requestData = {
+        url : Config.server  + "/button/" + buttonNumber
+    };
 
-        var requestData = {
-            url : Config.server  + "/kiosk-serial-online",
-            form: {}
-        };
-        request
-            .post( requestData, function(err, httpResponse, body) {
-                if( err )
-                {
-                    console.log('error on serial-online request', err);
-                }
-            });
-	    setColor( 50, 50, 50 );
-    });
-    
-    
-    // Switches the port into "flowing mode"
-    port.on('data', function (data) 
-    {
-        var stringData = data.toString('utf8');
-        if( /\n/.exec(stringData) && parseInt(stringData) > 0 )
+    console.log("Button pressed", buttonNumber);
+
+    request.post( requestData, function(err, httpResponse, body) {
+        if( err )
         {
-            var btn = parseInt(stringData);
-            var requestData = {
-                url : Config.server  + "/button/" + btn
-            };
-            console.log("Button pressed", btn);
-            request
-                .post( requestData, function(err, httpResponse, body) {
-                    if( err )
-                    {
-                        console.log('error on button press request', err);
-                    }
-                });
+            console.log('error on button press request', err);
         }
     });
-    
-    // Read data that is available but keep the stream from entering "flowing mode"
-    port.on('readable', function () {
-        console.log('readable event:', port.read());
-    });   
-
-} catch (error) {
-    console.log("serialport", error);
 }
 
-var btn = parseInt(1);
-console.log("===>", Config.server  + "/button/" + btn);
+function setVolume( volume )
+{
+    console.log("send volume", volume);
+    let requestData = {
+        url : Config.server  + "/kiosk-volume",
+        form: {
+            volume: volume
+        }
+    };
 
-            var requestData = {
-                url : Config.server  + "/button/" + btn
-            };
-            console.log("Button pressed", btn);
-            request
-                .post( requestData, function(err, httpResponse, body) {
-                    if( err )
-                    {
-                        console.log('error on button press request', err);
-                    }
-                });
+    request.post( requestData, function(err, httpResponse, body) {
+        if( err )
+        {
+            console.log('error on button press request', err);
+        }
+    });
+}
 
-  
 function setColor( r, g, b, callback)
 {
     if(port)
@@ -109,13 +70,59 @@ function rgbSequence(list, callback )
             setTimeout( function(){
                 rgbSequence( list, callback );
             }, 2000);
-            
+
         });
     }
     else
     {
         callback();
     }
+}
+
+try {
+    port = new SerialPort('/dev/ttyACM0', {
+        baudRate: Config.serialPort
+    });
+    port.on('error', function(){
+        console.log("serial not found");
+    });
+    port.pipe(parser);
+    port.on('open', function() {
+        console.log("serial open with config", Config);
+
+        var requestData = {
+            url : Config.server  + "/kiosk-serial-online",
+            form: {}
+        };
+        request
+            .post( requestData, function(err, httpResponse, body) {
+                if( err )
+                {
+                    console.log('error on serial-online request', err);
+                }
+            });
+	    setColor( 50, 50, 50 );
+    });
+
+
+    // Switches the port into "flowing mode"
+    port.on('data', function (data)
+    {
+        let stringData = data.toString('utf8');
+        if( /\n/.exec(stringData) && parseInt(stringData) > 0 )
+        {
+            let btn = parseInt(stringData);
+            sendButtonPress( btn );
+        }
+    });
+
+    // Read data that is available but keep the stream from entering "flowing mode"
+    port.on('readable', function () {
+        console.log('readable event:', port.read());
+    });
+
+} catch (error) {
+    console.log("serialport", error);
 }
 
 app.use(bodyParser.json());
@@ -133,21 +140,8 @@ server.listen(Config.port, function(){
             }
             else
             {
-                var volume = stdout.replace("%", "");
-                console.log("send volume", volume);
-                var requestData = {
-                    url : Config.server  + "/kiosk-volume",
-                    form: {
-                        volume: volume
-                    }
-                };
-                request
-                    .post( requestData, function(err, httpResponse, body) {
-                        if( err )
-                        {
-                            console.log('error on button press request', err);
-                        }
-                    });
+                let volume = stdout.replace("%", "");
+                setVolume( volume );
             }
         });
 });
