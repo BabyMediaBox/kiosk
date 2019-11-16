@@ -60,24 +60,6 @@ function setColor( r, g, b, callback)
         console.log(`serial missing: set color(${r},${g},${b})`);
     }
 }
-function rgbSequence(list, callback )
-{
-    if( list.length > 0 )
-    {
-        setColor( list[0][0], list[0][1], list[0][2], function(){
-            console.log('set color from sequence');
-            list.shift();
-            setTimeout( function(){
-                rgbSequence( list, callback );
-            }, 2000);
-
-        });
-    }
-    else
-    {
-        callback();
-    }
-}
 
 try {
     port = new SerialPort('/dev/ttyACM0', {
@@ -185,16 +167,6 @@ app.post('/rgb', (req, res) => {
     {
         res.send('fail');
     }
-});
-
-app.post('/rgb/sequence', (req, res) => {
-
-    var list = req.body;
-    rgbSequence(list, function(){
-        console.log("complete");
-    } );
-    console.log("rgb sequence", req.body );
-    res.send('ok');
 });
 
 
